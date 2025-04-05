@@ -22,6 +22,13 @@
       "when": 1743841962827,
       "tag": "0002_outgoing_rattler",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1743859540551,
+      "tag": "0003_peaceful_dorian_gray",
+      "breakpoints": true
     }
   ]
 }
