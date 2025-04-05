@@ -8,6 +8,20 @@
       "when": 1743746306527,
       "tag": "0000_dry_the_spike",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1743835234314,
+      "tag": "0001_abandoned_patch",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1743841962827,
+      "tag": "0002_outgoing_rattler",
+      "breakpoints": true
     }
   ]
 }

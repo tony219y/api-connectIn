@@ -41,7 +41,7 @@ export const login = async (email: string, password: string) => {
         const hashed = await bcrypt.compare(password, existingUser[0].password);
         if (existingUser.length === 0 || !hashed) throw new Error('Email or Password is incorrect');
         const token = generateToken((existingUser[0].id).toString());
-        console.log(token);
+        // console.log(token);
         return token;
 
     } catch (error: any) {
