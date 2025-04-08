@@ -26,6 +26,7 @@ export const offerApplyTable = pgTable("offerapplys", {
   title: varchar({ length: 255 }).notNull(),
   content: text().notNull(),  // ใช้ text แทน varchar เพื่อรองรับเนื้อหายาว
   type: varchar({ length: 32 }).notNull(),
+  status: varchar({ length: 32 }).default('Pending'),
   createdAt: timestamp({ withTimezone: true }).notNull(),
   updatedAt: timestamp({ withTimezone: true }).notNull(),
 });

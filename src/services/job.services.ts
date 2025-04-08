@@ -4,7 +4,8 @@ import { eq, and } from 'drizzle-orm';
 
 export const addNewofferApply = async (userId_sender: string, postId: string, title: string, content: string) => {
     try {
-        const existingOffer = await db
+        // ตรวจสอบว่ามีข้อเสนออยู่แล้วหรือไม่
+        const existingOffers = await db
             .select()
             .from(offerApplyTable)
             .where(
@@ -12,53 +13,64 @@ export const addNewofferApply = async (userId_sender: string, postId: string, ti
                     eq(offerApplyTable.ownerPostId, parseInt(postId)),
                     eq(offerApplyTable.senderId, parseInt(userId_sender))
                 )
-            )
-            .limit(1);
+            );
 
-            const [posts] = await db
+        if (existingOffers.length > 0) {
+            // ดึงข้อมูลโพสต์เพื่อตรวจสอบว่าเป็น recruiter หรือ seeker
+            const [postInfo] = await db
+                .select()
+                .from(postsTable)
+                .where(eq(postsTable.id, parseInt(postId)));
+            
+            throw new Error(`You have already ${(postInfo.postFor === 'recruiter') ? 'Applied to' : 'Offered on'} this post`);
+        }
+
+        // ดึงข้อมูลโพสต์และเจ้าของโพสต์
+        const [post] = await db
             .select()
             .from(postsTable)
             .where(eq(postsTable.id, parseInt(postId)))
-            .innerJoin(usersTable, eq(postsTable.userId, usersTable.id))
-            
-            if (existingOffer.length > 0) {
-                throw new Error(`You ar have already ${(posts.posts.postFor === 'recruiter') ? 'Apply' : 'Offer'} this post`)
-            }
+            .innerJoin(usersTable, eq(postsTable.userId, usersTable.id));
+
+        // เพิ่มข้อเสนอใหม่
         const response = await db.insert(offerApplyTable).values({
-            ownerPostId: posts.posts.userId,
+            ownerPostId: parseInt(postId), // ใช้ postId เป็น ownerPostId ซึ่งถูกต้องตามโครงสร้าง
             senderId: parseInt(userId_sender),
             title: title,
             content: content,
-            type: (posts.posts.postFor === 'recruiter') ? 'Apply' : 'Offer',
-            createdAt:new Date(),
+            type: (post.posts.postFor === 'recruiter') ? 'Apply' : 'Offer',
+            createdAt: new Date(),
             updatedAt: new Date()
-        })
+        });
 
-        console.log(response)
-        // console.log({
-        //     ownerPostId: posts.posts.userId,
-        //     senderId: parseInt(userId_sender),
-        //     title: title,
-        //     content: content,
-        //     type: (posts.posts.postFor === 'recruiter') ? 'Apply' : 'Offer',
-        //     date: new Date()
-        // })
-        return response
+        console.log('Offer apply created successfully:', response);
+        return response;
 
-    } catch (error:any) {
+    } catch (error: any) {
         console.log('Error creating offer apply!', error);
         throw new Error(error.message);
     }
 }
 
-
-/*
-  {
-  ownerPostId: 1,
-  senderId: 7,
-  title: 'Hello!',
-  content: 'I Love you',
-  type: 'Apply',
-  date: 2025-04-05T13:13:59.165Z
+export const getSeekerOffer = async (userId: string) => {
+    const checkSeekerOffer = await db.select().from(offerApplyTable)
+        .where(eq(offerApplyTable.senderId, parseInt(userId)))
+    console.log(checkSeekerOffer)
 }
-*/
+
+export const getSeekerPending = async (userId: string) => {
+    const [checkSeekerPending] = await db.select().from(offerApplyTable)
+        .where(eq(offerApplyTable.senderId, parseInt(userId)))
+        .innerJoin(postsTable,eq(postsTable.id,offerApplyTable.ownerPostId ))
+    // console.log('checkSeekerPending', checkSeekerPending)
+    return ({
+        post_id:checkSeekerPending.posts.id,
+        post_title:checkSeekerPending.posts.title,
+        post_content:checkSeekerPending.posts.content,
+        title_sender:checkSeekerPending.offerapplys.title,
+        content_sender:checkSeekerPending.offerapplys.content,
+        status:checkSeekerPending.offerapplys.status,
+        type:checkSeekerPending.offerapplys.type,
+        updatedAt:checkSeekerPending.offerapplys.updatedAt
+    })
+}
