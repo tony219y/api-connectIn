@@ -4,7 +4,6 @@ import { eq, and } from 'drizzle-orm';
 
 export const addNewofferApply = async (userId_sender: string, postId: string, title: string, content: string) => {
     try {
-        // ตรวจสอบว่ามีข้อเสนออยู่แล้วหรือไม่
         const existingOffers = await db
             .select()
             .from(offerApplyTable)
@@ -16,7 +15,6 @@ export const addNewofferApply = async (userId_sender: string, postId: string, ti
             );
 
         if (existingOffers.length > 0) {
-            // ดึงข้อมูลโพสต์เพื่อตรวจสอบว่าเป็น recruiter หรือ seeker
             const [postInfo] = await db
                 .select()
                 .from(postsTable)
@@ -25,16 +23,14 @@ export const addNewofferApply = async (userId_sender: string, postId: string, ti
             throw new Error(`You have already ${(postInfo.postFor === 'recruiter') ? 'Applied to' : 'Offered on'} this post`);
         }
 
-        // ดึงข้อมูลโพสต์และเจ้าของโพสต์
         const [post] = await db
             .select()
             .from(postsTable)
             .where(eq(postsTable.id, parseInt(postId)))
             .innerJoin(usersTable, eq(postsTable.userId, usersTable.id));
 
-        // เพิ่มข้อเสนอใหม่
         const response = await db.insert(offerApplyTable).values({
-            ownerPostId: parseInt(postId), // ใช้ postId เป็น ownerPostId ซึ่งถูกต้องตามโครงสร้าง
+            ownerPostId: parseInt(postId), 
             senderId: parseInt(userId_sender),
             title: title,
             content: content,
@@ -52,25 +48,54 @@ export const addNewofferApply = async (userId_sender: string, postId: string, ti
     }
 }
 
-export const getSeekerOffer = async (userId: string) => {
-    const checkSeekerOffer = await db.select().from(offerApplyTable)
-        .where(eq(offerApplyTable.senderId, parseInt(userId)))
-    console.log(checkSeekerOffer)
+export const getSeekerOffer = async (userId:string, postForInput: string) => {
+    // console.log('userId: ', userId, " type: ",postForInput)
+        const receiveOffer = await db.select(
+            {
+                postId: postsTable.id, 
+                postTitle: postsTable.title, 
+                postFor:postsTable.postFor, 
+                senderId: usersTable.id,
+                sendBy: usersTable.username,
+                sendMessage: offerApplyTable.content,
+                updatedAt: offerApplyTable.updatedAt,
+            })
+        .from(postsTable).where(eq(postsTable.userId,parseInt(userId)))
+        .innerJoin(offerApplyTable, and(
+            eq(postsTable.id, offerApplyTable.ownerPostId),
+            eq(postsTable.postFor, postForInput)
+        ))
+        .innerJoin(usersTable, eq(offerApplyTable.senderId, usersTable.id));
+
+        if (!receiveOffer || receiveOffer.length === 0) {
+            throw new Error("No Offer/Applicant found for this user.");
+        }
+        return receiveOffer
 }
 
 export const getSeekerPending = async (userId: string) => {
-    const [checkSeekerPending] = await db.select().from(offerApplyTable)
-        .where(eq(offerApplyTable.senderId, parseInt(userId)))
-        .innerJoin(postsTable,eq(postsTable.id,offerApplyTable.ownerPostId ))
-    // console.log('checkSeekerPending', checkSeekerPending)
-    return {
-        post_id:checkSeekerPending.posts.id,
-        post_title:checkSeekerPending.posts.title,
-        post_content:checkSeekerPending.posts.content,
-        title_sender:checkSeekerPending.offerapplys.title,
-        content_sender:checkSeekerPending.offerapplys.content,
-        status:checkSeekerPending.offerapplys.status,
-        type:checkSeekerPending.offerapplys.type,
-        updatedAt:checkSeekerPending.offerapplys.updatedAt
+    const checkSeekerPending = await db
+      .select({
+        post_id: postsTable.id,
+        post_title: postsTable.title,
+        post_content: postsTable.content,
+        post_for: postsTable.postFor,
+        post_by: usersTable.username,
+        title_sender: offerApplyTable.title,
+        content_sender: offerApplyTable.content,
+        status: offerApplyTable.status,
+        type: offerApplyTable.type,
+        updatedAt: offerApplyTable.updatedAt
+      })
+      .from(offerApplyTable)
+      .where(eq(offerApplyTable.senderId, parseInt(userId)))
+      .innerJoin(postsTable, eq(postsTable.id, offerApplyTable.ownerPostId))
+      .innerJoin(usersTable, eq(usersTable.id, postsTable.userId));
+  
+    if (!checkSeekerPending || checkSeekerPending.length === 0) {
+      throw new Error("No pending offer found for this user.");
     }
-}
+  
+    return checkSeekerPending;
+  };
+  

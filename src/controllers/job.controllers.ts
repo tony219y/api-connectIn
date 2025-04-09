@@ -6,7 +6,7 @@ export const createNewOfferApply = async(req: Request, res: Response) =>{
     try {
         const user = (req as any).user;
         const {postId, title, content} = req.body;
-        console.log({postId, title, content})
+        // console.log({postId, title, content})
         await addNewofferApply(user.userId,postId, title, content)
         res.status(201).json({message: 'create new offer apply success!'})
     } catch (error:any) {
@@ -17,25 +17,23 @@ export const createNewOfferApply = async(req: Request, res: Response) =>{
 
 export const seekerOffer = async(req:Request, res:Response)=>{
     try {
-        // const username = req.params;
         const user = (req as any).user;
-        await getSeekerOffer(user.userId)
-        res.status(200).json({message: 'Yes!!!!!'})
+        const postForInput = req.query.type as string;
+        const response = await getSeekerOffer(user.userId, postForInput)
+        console.log("response: ", response)
+        res.status(200).json(response)
     } catch (error : any) {
         console.error(error);
-        res.status(400).json({message: error})
+        res.status(400).json({message: error.message})
     }
 }
 export const seekerPending = async(req:Request, res:Response)=>{
     try {
-        // const username = req.params;
         const user = (req as any).user;
         const response = await getSeekerPending(user.userId)
-        console.log(response)
-        console.log(typeof response)
         res.status(200).json(response)
     } catch (error : any) {
-        console.error(error);
-        res.status(400).json({message: error})
+        // console.error(error);
+        res.status(400).json({message: error.message})
     }
 }

@@ -9,7 +9,7 @@ const router = express.Router();
 
 router.post('/offerapply', authMiddleware, createNewOfferApply);
 
-router.get('/seeker-offer/:username', authMiddleware, seekerOffer)
-router.get('/seeker-pending/:username', authMiddleware, seekerPending)
+router.get('/offer-applicant/:username', authMiddleware, seekerOffer)
+router.get('/pending/:username', authMiddleware, seekerPending)
 
 export default router;
