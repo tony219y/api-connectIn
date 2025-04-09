@@ -63,7 +63,7 @@ export const getSeekerPending = async (userId: string) => {
         .where(eq(offerApplyTable.senderId, parseInt(userId)))
         .innerJoin(postsTable,eq(postsTable.id,offerApplyTable.ownerPostId ))
     // console.log('checkSeekerPending', checkSeekerPending)
-    return ({
+    return {
         post_id:checkSeekerPending.posts.id,
         post_title:checkSeekerPending.posts.title,
         post_content:checkSeekerPending.posts.content,
@@ -72,5 +72,5 @@ export const getSeekerPending = async (userId: string) => {
         status:checkSeekerPending.offerapplys.status,
         type:checkSeekerPending.offerapplys.type,
         updatedAt:checkSeekerPending.offerapplys.updatedAt
-    })
+    }
 }

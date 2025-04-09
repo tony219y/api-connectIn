@@ -31,6 +31,8 @@ export const seekerPending = async(req:Request, res:Response)=>{
         // const username = req.params;
         const user = (req as any).user;
         const response = await getSeekerPending(user.userId)
+        console.log(response)
+        console.log(typeof response)
         res.status(200).json(response)
     } catch (error : any) {
         console.error(error);
